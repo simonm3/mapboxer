@@ -1,0 +1,26 @@
+[[extend "map.html"]]
+
+[[block files]]
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
+    type="text/css" />
+[[end]]
+
+[[block map]]
+<!-- todo why? without this div and text the slider changes title font color -->
+<div>X</div>
+<div id="comparison-container">
+    <div id="map1" class="map"></div>
+    <div id="map2" class="map"></div>
+</div>
+
+<div id="rightblock">
+    <div id="filter-group">[[=map1.layer_selector]]</div>
+    <div id="legends">[[=map1.legends]]</div>
+</div>
+
+<script>
+    [[include "../static/map.js"]]
+    [[include "../static/slider.js"]]
+</script>
+[[end]]
