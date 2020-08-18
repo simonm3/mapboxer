@@ -49,13 +49,13 @@ def get_map(wards, wardcentres, const, constcentres, shading="ratio"):
     m.center = [-1.7083, 52.1917]
     m.zoom = 10
 
-    stops = None
     if shading == "ratio":
         stops, labels = get_ratio_stopslabels(wards)
         # grey, yellow, [blue, green*2], libdem
         colorset = ["#dddddd", "#ffeb99", "#d3f6f3", "#a7e9af", "#75b79e", "#FAA61A"]
     elif shading == "party":
         labels = ["no election", "C", "Lab", "LD", "UKIP", "Grn", "NAT", "Other"]
+        stops = labels
         colorset = [
             "#dddddd",
             "#00aeef",

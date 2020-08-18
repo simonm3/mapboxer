@@ -6,21 +6,9 @@ import re
 import geopandas as gpd
 import pandas as pd
 
-from .. import utils
+from ..utils import replace_quotes
 
 log = logging.getLogger(__name__)
-
-
-def replace_quotes(df):
-    """ remove single quotes from all str columns 
-    quotes are an issue in json string such as "'name' : 'Jane's Cafe'"
-    todo escape rather than replace?
-    """
-    for col in [c for c in df if df[c].dtype == object]:
-        try:
-            df[col] = df[col].str.replace("'", "")
-        except:
-            log.warning(f"cannot remove quotes from {col}")
 
 
 ## geography ##########################################################
