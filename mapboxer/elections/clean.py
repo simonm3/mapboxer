@@ -11,12 +11,12 @@ from . import get
 log = logging.getLogger(__name__)
 
 
-def general():
+def ge(year):
     const = get.constituencies()
     const.geometry = const.geometry.simplify(0.001)
-    res_ge = get.ge()
+    res_ge = get.ge(year)
 
-    # cleanup res_ge names (not from ONS; no code; names changed)
+    # (ONS : electoral calculus) constituencies
     matches = [
         ("South East Cambridgeshire", "Cambridgeshire South East"),
         ("North West Norfolk", "Norfolk North West"),
@@ -43,30 +43,31 @@ def general():
 def local(year):
     wards = get.wards(year)
     # wards.geometry = borders.geometry.simplify(.003)
-    del wards["year"]
 
     local = get.local(year)
     del local["year"]
 
     # calculate ratio
     df = local.copy()
-    df = pd.crosstab(
-        [df.authority, df.wardname], df.party, df.votes, aggfunc="sum"
-    ).reset_index()
+    df = pd.crosstab(df.wardcode, df.party, df.votes, aggfunc="sum").reset_index()
     df.columns.name = ""
     df = df.fillna(0)
     df["ratio"] = df.LD / df.drop("LD", axis=1).max(axis=1)
     df.ratio = df.ratio * 100
-    df = df[["authority", "wardname", "ratio"]]
+    df = df[["wardcode", "ratio"]]
 
     # calculate winner and merge
-    local = local.sort_values("votes", ascending=False)
-    local = local.drop_duplicates(["authority", "wardname"])
-    local.loc[~local.party.isin(["C", "LD", "UKIP", "Lab", "Grn"]), "party"] = "Other"
+    local = local.sort_values("votes", ascending=False).drop_duplicates("wardcode")
+    local.loc[local.party.isin(["SNP", "PC"]), "party"] = "NAT"
+    local.loc[
+        ~local.party.isin(["C", "LD", "UKIP", "Lab", "Grn", "NAT"]), "party"
+    ] = "Other"
     local = local.merge(df, how="left").reset_index(drop=True)
 
     # merge borders
-    wards = wards.merge(local, on=["authority", "wardname"], how="left",)
+    wards = wards[["wardcode", "wardname", "geometry"]].merge(
+        local.drop("wardname", axis=1), on=["wardcode"], how="left"
+    )
 
     # centroids
     wardcentres = wards.copy()
