@@ -17,7 +17,7 @@ from ipstartup import *
 import geopandas as gpd
 import plotly.express as px
 from mapboxer.elections import get, clean, show
-from mapboxer.utils import iframe 
+from mapboxer.utils import iframe
 
 const, constcentres = clean.ge(2010)
 
