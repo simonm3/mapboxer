@@ -1,0 +1,127 @@
+targetingmap
+============
+objectives = boundary reviews + campaign targetng
+sponsor = Dave Mcobb
+database of data
+    ward turnout beyond canvassing (known from marked register)
+    votes by local area (already modeled)
+other data
+    canvas responses
+    demographics
+
+todo
+    plot voters
+    predict party from neighbours
+        dep=party
+
+        demographic
+        postcode sum by party
+        pd sum by party
+        ward sum by party
+
+    sources
+        local authorities
+        democracy club
+        wikipedia
+        teale
+        swarbrick
+        
+Some observations
+=================
+* Half of wards in 2015 had no Libdem candidate. Many were previously Libdem council and MP seats especially in the South West.
+* "No seat" wards are clustered. Should we spend more on recruitment?
+* Strong Libdem areas are clustered
+
+# charts #################################################################
+
+    altair => vega => d3.js
+    nvd3 => nvd3.js => d3.js
+    plotly express (functions ) => go (objects) => plotly.js => d3.js
+        figure (data/traces, layout)
+
+# maps #################################################################
+
+qgis => qgis2web => openlayers, leaflet, mapboxgl
+    positives
+        wide functionality
+        easy to convert and align sources
+        easy to select layers to show
+    negatives
+        bad design of menus
+        python only in own environment
+        hard to use
+        qgis2web is slow to create maps and sometimes not working
+        qgis2web maps less responsive
+folium => leaflet.js
+    simple maps only
+google earth engine
+    common api for large collection of satellite images
+    only free source of high res satellite  images
+    parallel processing
+    javascript only. python weak documentation.
+    difficult api
+plotly express (functions ) => go (objects) => plotly.js => stackgl.js => webgl
+                                                         => mapboxgl.js => webgl
+
+# mapbox ###########################################################
+
+mapboxgl.js => webgl
+    vector tiles displayed in canvas (client side)
+    faster and easier to change styles
+    dataset (geometry/data) => tileset vector/raster at 22 zoom levels
+    style = json applied to tileset.
+datasets
+    streets, satellite etc..
+    geojson (geometries + properties)
+studio editor
+datasets editor
+    geojosn => tileset (dataset + styles)
+    multipolygon converted to polygon  
+apis
+    mapbox (python api) 
+    geocoding
+    directions
+    turf.js (spatial analysis)
+
+# mapbox potential python api #####################################
+
+mapboxgl approach
+    javascript templates
+
+render
+    map = html/css/js
+
+map elements
+    rootproperties
+    source
+    layer
+
+additional elements
+    layer checkboxes
+
+events
+    python2js
+    onclick checkbox
+    drag checkboxes in sequence
+    set styles e.g. opacity
+
+data/styles
+    inheritable objects
+    store as dict, yaml, dotdict, class => json
+
+quick maps using function templates => combination of objects
+    common map types with default settings
+
+link to mapbox
+    download, upload
+    documentation
+    autocomplete
+
+# other GIS #########################################################
+
+geopandas (geometries + properties) => shapely, gdal, fiona, geojson
+
+dash
+    flask => json
+    react
+    plotly.js

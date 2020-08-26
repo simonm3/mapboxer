@@ -15,13 +15,15 @@ from ..utils import replace_quotes
 
 log = logging.getLogger(__name__)
 
+data = Path(__file__).parent.parent.parent / "data"
+
 
 ## geography ##########################################################
 
 
 def constituencies(year=2017):
     """ boundaries unchanged 2010-2020 """
-    path = Path("../data/boundaries")
+    path = data / "boundaries"
     df = gpd.read_file(
         path
         / "Westminster_Parliamentary_Constituencies__December_2017__Boundaries_UK-shp/Westminster_Parliamentary_Constituencies__December_2017__Boundaries_UK.shp"
@@ -33,7 +35,7 @@ def constituencies(year=2017):
 
 
 def districts(year):
-    path = Path("../data/boundaries")
+    path = data / "boundaries"
     f = "Local_Authority_Districts__December_2015__Boundaries-shp/Local_Authority_Districts__December_2015__Boundaries.shp"
     df = gpd.read_file(path / f)
     df = df.rename(columns=dict(lad15nm="authority"))
@@ -44,7 +46,7 @@ def districts(year):
 
 
 def wards(year):
-    path = Path("../data/boundaries")
+    path = data / "boundaries"
     if (year <= 2010) or (year in [2012, 2013, 2014]):
         log.warning(f"using 2011 boundary as {year} not available")
         year = 2011
@@ -79,7 +81,7 @@ def wards(year):
 
 def ge(year):
     """ ge results 1995-2019 from electoralcalculus """
-    df = pd.read_excel("../data/ge/pivottablefull.xlsx", sheet_name="data")
+    df = pd.read_excel(data / "ge/pivottablefull.xlsx", sheet_name="data")
     df = df[df.Year == year]
     df = pd.crosstab(df.Constituency, df.Party, df.Vote, aggfunc="sum")
     df = df.reset_index().rename(columns=dict(Constituency="const"))
@@ -91,7 +93,8 @@ def ge(year):
 
 def local(year):
     """ 2010-2019 from andrew teale """
-    path = Path("../data/local/")
+    path = data / "local"
+    params = dict()
 
     if year == 2010:
         names = ["authority", "wardname", "person", "party", "votes", "elected"]
@@ -130,7 +133,10 @@ def local(year):
 
     # lookup wardcode
     if year <= 2014:
-        f = "../data/boundaries/Ward_to_Census_Merged_Ward_to_Local_Authority_District__December_2011__Lookup_in_England_and_Wales.csv"
+        f = (
+            data
+            / "boundaries/Ward_to_Census_Merged_Ward_to_Local_Authority_District__December_2011__Lookup_in_England_and_Wales.csv"
+        )
         lookup = pd.read_csv(f)
         lookup.columns = [c.lower() for c in lookup.columns]
         lookup = lookup.rename(
@@ -139,4 +145,4 @@ def local(year):
         df = df.merge(lookup, on=["authority", "wardname"], how="left")
 
     # wardcode unique whereas wardname is not (e.g. Abbey is very common)
-    return df[["wardcode", "wardname", "year", "party", "votes"]]
+    return df[["authority", "wardcode", "wardname", "year", "party", "votes"]]

@@ -1,4 +1,6 @@
-[[from yatl import XML]]
+[[from yatl import XML
+  import json
+]]
 mapboxgl.accessToken = '[[=token]]';
 
 var map1 = new mapboxgl.Map(
@@ -12,18 +14,16 @@ map1.on('load', function () {
 
     // layers
     [[for layer in map1.layers:]]
-    map1.addLayer([[=XML(layer)]]);
+    map1.addLayer([[=XML(json.dumps(layer))]]);
     [[pass]]
 
-    // show/hide layer and legend
+    // toggle layers
     for (layername of [[=XML([layer["id"] for layer in map1.layers])]]) {
-    // When the checkbox changes, update the visibility of the layer.
     $("#" + layername).change(function (e) {
-        // show/hide fill layer
+        // toggle fill
         map1.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none'
         );
-
-        // show/hide legend
+        // toggle legend
         $("#" + e.target.id + "_legend").toggle()
     });
     // end for

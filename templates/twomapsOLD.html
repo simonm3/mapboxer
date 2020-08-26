@@ -4,24 +4,30 @@
 
 [[block map]]
 <style>
-    .maps {
-        display: flex;
+    #comparison-container {
+        width: 100%;
     }
 
-    .map {
-        margin: 0px;
-        padding: 0px;
+    #map1 {
+        height: 100%;
         width: 50%;
+        float: left;
+    }
+
+    #map2 {
+        height: 100%;
+        width: 50%;
+        float: left;
     }
 </style>
 
-<div class="maps">
+<div id="comparison-container">
     <div id="map1" class="map"></div>
     <div id="map2" class="map"></div>
 </div>
 
 <div id="rightblock">
-    <div id="filter-group">[[=map1.layer_toggles]]</div>
+    <div id="filter-group">[[=map1.layer_selector]]</div>
     <div id="legends">[[=map1.legends]]</div>
 </div>
 

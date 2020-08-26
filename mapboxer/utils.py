@@ -3,14 +3,20 @@ import difflib
 import json
 import logging
 import os
+from functools import partial
 from io import BytesIO
+from multiprocessing import Pool
+from time import sleep
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from fuzzywuzzy import fuzz, process
+from geopy.distance import geodesic
 from IPython.display import HTML
 from scipy.spatial import Voronoi
-from shapely.geometry import MultiPoint, Polygon
+from shapely.geometry import MultiPoint, Point, Polygon
+from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +48,8 @@ def geojson(gdf):
     """ return geojson from geodataframe
     includes geometry, crs, properties (from other columns)
     """
+    if not isinstance(gdf, gpd.GeoDataFrame):
+        gdf = gpd.GeoDataFrame(gdf)
     f = BytesIO()
     gdf.to_file(f, driver="GeoJSON")
 
@@ -166,3 +174,49 @@ def points2border(points, area_key):
     borders2 = voronoi2.dissolve(by=area_key)[["geometry"]]
 
     return borders2
+
+
+def km2deg(km, a=(50.8, 2.7)):
+    """ convert km to degrees distance
+    :param a: latitude, longtitude of point. default is Dorset, uk.
+    """
+    b = a[0] + 0.1, a[1] + 0.1
+    deg = np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+    return km * deg / geodesic(a, b).km
+
+
+def deg2km(deg, a=(50.8, 2.7)):
+    """ convert distance from degrees to km
+    :param a: latitude, longtitude of point. default is Dorset, uk.
+    """
+    return deg / km2deg(1)
+
+
+def mapply(df, func, **kwargs):
+    """ apply func to dataframe using multiprocessing to split across cores
+    :param df: pandas dataframe
+    :param func: function to apply to df
+    :param ncores: number of cores. default cpu_count.
+    :param nsplit: number of splits in dataframe. default cpu_count.
+    :param kwargs: all kwargs not listed above are passed to func
+    func is any function and can be tested using basic df.apply
+    """
+    ncores = kwargs.pop("ncores", os.cpu_count())
+    nsplits = kwargs.pop("nsplits", os.cpu_count())
+    # partial enables additional parameters as pool.map just accepts iterator
+    func = partial(func, **kwargs)
+    chunks = np.array_split(df, nsplits)
+    pool = Pool(ncores)
+    res = tqdm(pool.map(func, chunks), total=nsplits)
+    df = pd.concat(res)
+    pool.close()
+    pool.join()
+    return df
+
+
+pd.DataFrame.mapply = mapply
+
+
+def test1():
+    for x in tqdm(range(100)):
+        sleep(1)

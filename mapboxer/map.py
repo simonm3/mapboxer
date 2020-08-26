@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from functools import partial
 from os.path import expanduser
 from pathlib import Path
 
@@ -40,15 +41,16 @@ class Map:
         self.sources = dict()
 
         # extra to mapbox
+        # [square, triangle]
+        self.shapeset = ["\u25a0", "\u25b2"]
         self.colorset = px.colors.qualitative.Set3
-        self.grayscale = lambda stops: [
-            c.hex for c in Color("white").range_to(Color("black"), stops)
+        self.grayscale = lambda cats: [
+            c.hex for c in Color("white").range_to(Color("black"), cats)
         ]
-        self.legends = ""
-        self.layer_selector = ""
+        self.legends = True
+        self.layer_toggles = True
         self.sourcesdf = dict()
         self.title = ""
-        self.map2 = None
 
         # variables declared in init are not part of root
         self.excluded = None
@@ -70,97 +72,156 @@ class Map:
         # converted to geojson
         s = kwargs.copy()
         s["data"] = geojson(s["data"])
-        self.sources[id] = json.dumps(change_keys(s))
+        self.sources[id] = json.dumps(s)
 
     def add_layer(self, id=None, **kwargs):
         """ add a layer to the map with defaults for text_color, text_size, fill colors, legend
-        :param id: name of layer used in layerselector
-        :param property: source data column name
+        :param id: name of layer
+        :param x: source data column name
         :param colorset: list of colors to use for shading. defaults to Set3.
-        :param stops: break points. int for quantiles; list for cuts or categories
-        :param labels: text for legend; default is category OR <value
-        :param method: set to "interpolate" for linear change over range (only relevant for continuous scale)
+        :param cats: categories in order required for legend. For continuous int for quantiles; list for cuts.
+        :param ycats: categories for y axis
+        :param labels: default is cats for categoric; "<value" for continuous
+        :param method: "interpolate" for linear change over range (only relevant for continuous scale)
+        :param legend: False to not show legend. default True.
+        :param visible: visibility of layer
+        :param toggle: if False then don't add toggle button
         :param kwargs: any mapbox layer parameters in addition to the above
+
+        Layer types
+        -----------
+        symbol=text
+            text by default
+            can add image using kwargs.
+        fill=shading
+            categoric or interpolated colors
+        circle=color points
+            faster rendering than symbol images
+        shape=color+shape points
+            mapbox symbol using text to add shapes
+            not as good as circles especially on zoom
         """
         dd = autodict(kwargs)
         dd.id = id
-        dd.legend = []
+        dd.layout.visibility = "visible" if dd.pop("visible", True) else "none"
         df = self.sourcesdf[kwargs["source"]]["data"]
 
-        # defaults for symbol/text
+        # defaults for layers
         if dd.type == "symbol":
-            dd.paint.setdefault("text_color", "#2a3f5f")
-            dd.layout.setdefault("text_field", ["get", dd.property])
-            dd.layout.setdefault("text_size", 10)
+            self.add_layer_text(dd, df)
         elif dd.type == "fill":
             self.add_layer_fill(dd, df)
+        elif dd.type == "circle":
+            self.add_layer_circle(dd, df)
+        elif dd.type == "shape":
+            self.add_layer_shape(dd, df)
 
         kwargs = change_keys(dd).to_dict()
         self.layers.append(kwargs)
 
+    def add_layer_text(self, dd, df):
+        """ create json for plain grey text with no icon """
+        dd.paint.setdefault("text_color", "#2a3f5f")
+        dd.layout.setdefault("text_field", ["get", dd.x])
+        dd.layout.setdefault("text_size", 10)
+
+    def add_layer_shape(self, dd, df):
+        """ create json for points with shape*color. uses text with shape font """
+        dd.type = "symbol"
+
+        # data
+        colorset = dd.get("colorset", self.colorset)
+        shapeset = dd.get("shapeset", self.shapeset)
+        cats = dd.get("cats", df[dd.x].unique())
+        ycats = dd.get("ycats", df[dd.y].unique())
+
+        # color
+        dd.paint.text_color = ["match", ["get", dd.x]]
+        for cat in list(zip(cats, colorset)):
+            dd.paint.text_color.extend(cat)
+        dd.paint.text_color.append("white")
+
+        # shape
+        dd.layout.text_allow_overlap = True
+        dd.layout.setdefault("text_field", ["get", dd.y])
+        dd.layout.text_field = ["match", ["get", dd.y]]
+        for cat in list(zip(ycats, shapeset)):
+            dd.layout.text_field.extend(cat)
+        dd.layout.text_field.append("X")
+        dd.layout.setdefault("text_size", 15)
+
+        # legend
+        if dd.legend:
+            labels = dd.get("labels", cats)
+            dd.legend = list(zip(labels, colorset)) + list(zip(ycats, shapeset))
+
+    def add_layer_circle(self, dd, df):
+        """ create json for circle/point layer """
+        # data
+        colorset = dd.get("colorset", self.colorset)
+        cats = dd.get("cats", df[dd.x].unique())
+
+        # paint
+        dd.paint.circle_radius = dict(base=1.75, stops=[[12, 2], [22, 180]])
+        dd.paint.circle_color = ["match", ["get", dd.x]]
+        for cat in list(zip(cats, colorset)):
+            dd.paint.circle_color.extend(cat)
+        dd.paint.circle_color.append("white")
+
+        # legend
+        if dd.get("legend", True):
+            labels = dd.get("labels", cats)
+            dd.legend = list(zip(labels, colorset))
+
     def add_layer_fill(self, dd, df):
         """ create json for fill layer """
-        property_ = dd.property
+        x = df[dd.x]
 
         # categoric data
-        if df[property_].dtype == "O":
-            df["cats"] = df[property_]
+        if x.dtype == "O":
             method = "match"
-            stops = dd.get("stops", df.cats.unique())
-            labels = dd.get("labels", stops)
+            cats = dd.get("cats", x.unique())
+            labels = dd.get("labels", cats)
         # numeric data
         else:
+            # integer cats is qcut with default quartiles
+            cats = dd.get("cats", 4)
+            if isinstance(cats, int):
+                cats = pd.qcut(x, cats, retbins=True)
+            labels = dd.get("labels", [f"<{level}" for level in cats] + ["none"])
 
-            # integer is qcut with default quartiles
-            stops = dd.get("stops", 4)
-            if isinstance(stops, int):
-                df["cats"] = pd.qcut(df[df[property_].notnull()][property_], stops)
-
-            # list uses cut which is inclusive i.e. stops=[min, q1,q2,q3, max]
-            else:
-                df["cats"] = pd.cut(df[dd.property], bins=stops)
-
-            df.cats = df.cats[df.cats.notnull()].apply(lambda x: x.right)
-
-            # must be integers to match steps
-            df.cats = df.cats.astype(float).fillna(-9999).astype(int)
-
-            # stops and labels
-            stops = sorted(df.cats.unique())
-            labels = dd.get("labels", ["none"] + [f"<{level}" for level in stops[1:]])
-
-            # step or interpolated
+            # can be "interpolated"
             method = dd.get("method", "step")
 
         # colorset
-        if method == "interpolated":
-            colorset = dd.get("colorset", self.grayscale(len(stops)))
+        if "colorset" in dd:
+            colorset = dd.colorset
         else:
-            colorset = dd.get("colorset", self.colorset)
+            colorset = (
+                self.grayscale(len(cats)) if method == "interpolated" else self.colorset
+            )
 
         # paint
         # exact match
         if method == "match":
-            dd.paint.fill_color = ["match", ["get", "cats"]]
-            for stop in list(zip(stops, colorset)):
-                dd.paint.fill_color.extend(stop)
+            dd.paint.fill_color = ["match", ["get", dd.x]]
+            for cat in list(zip(cats, colorset)):
+                dd.paint.fill_color.extend(cat)
             dd.paint.fill_color.append("white")
         # highest category below value
         elif method == "step":
-            dd.paint.fill_color = ["step", ["get", "cats"], colorset[0]]
-            for stop in list(zip(stops, colorset))[1:]:
-                dd.paint.fill_color.extend(stop)
+            dd.paint.fill_color = ["step", ["get", dd.x, "white"]]
+            for cat in list(zip(cats, colorset)):
+                dd.paint.fill_color.extend(cat)
         # interpolated between two categories
         elif method == "interpolated":
-            dd.paint.fill_color = ["interpolate", ["linear"], ["get", property_]]
-            for stop in list(zip(stops, colorset)):
-                dd.paint.fill_color.extend(stop)
+            dd.paint.fill_color = ["interpolate", ["linear"], ["get", dd.x]]
+            for cat in list(zip(cats, colorset)):
+                dd.paint.fill_color.extend(cat)
 
         # legend
-        dd.legend = list(zip(labels, colorset))
-
-    def add_layer_selector(self):
-        self.layer_selector = self.get_layer_selector()
+        if dd.legend:
+            dd.legend = list(zip(labels, colorset))
 
     # output ###########################################################################
 
@@ -182,6 +243,9 @@ class Map:
             html = open(f"../templates/map.html").read()
             self.legends = self.get_legends()
 
+            if self.layer_toggles:
+                self.layer_toggles = self.get_layer_toggles()
+
             return yatl.render(
                 html, delimiters="[[ ]]", context=dict(token=token, map1=self),
             )
@@ -200,7 +264,8 @@ class Map:
         """
         legends = DIV()
         for layer in self.layers:
-            if not "legend" in layer:
+            legend = layer.get("legend", False)
+            if not legend:
                 continue
             legend = DIV(_id=f"{layer['id']}_legend")
             for label, color in layer["legend"]:
@@ -214,10 +279,16 @@ class Map:
             legends.append(legend)
         return legends
 
-    def get_layer_selector(self):
-        """ add layer selecter """
+    def get_layer_toggles(self):
+        """ add buttons to toggle layers """
         fg = DIV(_class="filter-group")
         for layer in self.layers:
-            fg.append(INPUT(_type="checkbox", _id=layer["id"], _checked=True))
+            if not layer.get("toggle", True):
+                continue
+            try:
+                checked = layer["layout"]["visibility"] == "visible"
+            except:
+                checked = True
+            fg.append(INPUT(_type="checkbox", _id=layer["id"], _checked=checked,))
             fg.append(LABEL(layer["id"], _for=layer["id"]))
         return fg
