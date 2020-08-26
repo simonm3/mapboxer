@@ -24,14 +24,14 @@ const, constcentres = clean.ge(2010)
 
 year1=2011
 wards, wardcentres = clean.local(year1)
-m1 = show.get_map(wards, wardcentres, const, constcentres, "party")
+m1 = show.get_map(wards[:50], wardcentres[:50], const[:50], constcentres[:50], "party")
 
 year2=2015
 wards, wardcentres = clean.local(year2)
-m2 = show.get_map(wards, wardcentres, const, constcentres, "party")
+m2 = show.get_map(wards[:50], wardcentres[:50], const[:50], constcentres[:50], "party")
 
 m1.title = f"Local elections {year2} (left of slider is {year1})"
-s = Twomaps(m1, m2, "sidebyside")
+s = Twomaps(m1, m2, "slider")
 iframe(s.html())
 
 s.save("local_slider2015")

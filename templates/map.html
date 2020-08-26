@@ -23,7 +23,7 @@
     [[end]]
 
 </head>
-<!-- <style>
+<style>
     [[include "../static/map.css"]]
 </style>
 
@@ -31,19 +31,17 @@
     <div id="titlebar">
         <span id="geocoder"></span>
         <span id="title">[[=map1.title]]</span>
-    </div> -->
-
-[[block map]]
-<div id="map" class="map"></div>
-
-<div id="rightblock">
-    <div id="filter-group">[[=map1.layer_toggles]]</div>
-    <div id="legends">[[=map1.legends]]</div>
-</div>
-<script>
-    [[include "../static/map.js"]]
-</script>
-[[end]]
+    </div>
+    [[block map]]
+    <div id="map" class="map"></div>
+    <div id="rightblock">
+        <div id="filter-group">[[=map1.layer_toggles]]</div>
+        <div id="legends">[[=map1.legends]]</div>
+    </div>
+    [[end]]
+    <script>
+        [[include "../static/map.js"]]
+    </script>
 </body>
 
 </html>

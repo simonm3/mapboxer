@@ -76,24 +76,24 @@ def get_map(wards, wardcentres, const, constcentres, shading="ratio"):
     wardcentres = wardcentres[["wardname", "geometry"]]
 
     # data sources
-    m.add_source("wards", wards)
-    m.add_source("wardcentres", wardcentres)
+    # m.add_source("wards", wards)
+    # m.add_source("wardcentres", wardcentres)
     m.add_source("const", const)
-    m.add_source("constcentres", constcentres)
+    # m.add_source("constcentres", constcentres)
 
     # layers
-    m.add_layer(
-        "shading", type="fill", source="wards", x=shading, cats=cats, colorset=colorset,
-    )
-    m.add_layer("wards", type="line", source="wards")
-    m.add_layer("wardnames", type="symbol", source="wardcentres", x="wardname")
+    # m.add_layer(
+    #     "shading", type="fill", source="wards", x=shading, cats=cats, colorset=colorset,
+    # )
+    # m.add_layer("wards", type="line", source="wards")
+    # m.add_layer("wardnames", type="symbol", source="wardcentres", x="wardname")
     m.add_layer("constituencies", type="line", source="const", paint=dict(line_width=3))
-    m.add_layer(
-        "GE2010_pcwin",
-        type="symbol",
-        source="constcentres",
-        x="ratio",
-        layout=dict(text_size=40),
-    )
+    # m.add_layer(
+    #     "GE2010_pcwin",
+    #     type="symbol",
+    #     source="constcentres",
+    #     x="ratio",
+    #     layout=dict(text_size=40),
+    # )
 
     return m
