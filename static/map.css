@@ -23,6 +23,8 @@ body {
 
 #maps {
     height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .map {
@@ -51,6 +53,12 @@ body {
     bottom: 0;
     height: auto;
     width: 100%;
+}
+
+/* for border between maps */
+
+.bottom {
+    border-bottom-style: dashed;
 }
 
 /* titlebar *******************************************/

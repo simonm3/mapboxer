@@ -34,7 +34,6 @@ function syncMaps(arguments) {
             maps.push(arguments[i]);
         }
     }
-
     // Create all the movement functions, because if they're created every time
     // they wouldn't be the same and couldn't be removed.
     var fns = [];

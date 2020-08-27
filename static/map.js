@@ -17,13 +17,11 @@ map1.on('load', function () {
     map1.addLayer([[=XML(json.dumps(layer))]]);
     [[pass]]
 
-    // toggle layers
+    // toggle layer/legend
     for (layername of [[=XML([layer["id"] for layer in map1.layers])]]) {
     $("#" + layername).change(function (e) {
-        // toggle fill
         map1.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none'
         );
-        // toggle legend
         $("#" + e.target.id + "_legend").toggle()
     });
     // end for

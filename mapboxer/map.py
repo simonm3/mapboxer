@@ -47,8 +47,8 @@ class Map:
         self.grayscale = lambda cats: [
             c.hex for c in Color("white").range_to(Color("black"), cats)
         ]
-        self.legends = True
-        self.layer_toggles = True
+        self.show_legends = True
+        self.show_toggles = True
         self.sourcesdf = dict()
         self.title = ""
 
@@ -83,9 +83,9 @@ class Map:
         :param ycats: categories for y axis
         :param labels: default is cats for categoric; "<value" for continuous
         :param method: "interpolate" for linear change over range (only relevant for continuous scale)
-        :param legend: False to not show legend. default True.
         :param visible: visibility of layer
-        :param toggle: if False then don't add toggle button
+        :param show_legend: False to not show legend. default True.
+        :param show_toggle: False to not show toggle. default True.
         :param kwargs: any mapbox layer parameters in addition to the above
 
         Layer types
@@ -151,7 +151,7 @@ class Map:
         dd.layout.setdefault("text_size", 15)
 
         # legend
-        if dd.legend:
+        if dd.get("show_legend", True):
             labels = dd.get("labels", cats)
             dd.legend = list(zip(labels, colorset)) + list(zip(ycats, shapeset))
 
@@ -169,7 +169,7 @@ class Map:
         dd.paint.circle_color.append("white")
 
         # legend
-        if dd.get("legend", True):
+        if dd.get("show_legend", True):
             labels = dd.get("labels", cats)
             dd.legend = list(zip(labels, colorset))
 
@@ -220,7 +220,7 @@ class Map:
                 dd.paint.fill_color.extend(cat)
 
         # legend
-        if dd.legend:
+        if dd.get("show_legend", True):
             dd.legend = list(zip(labels, colorset))
 
     # output ###########################################################################
@@ -242,10 +242,7 @@ class Map:
         with tempdir(Path(__file__).parent.parent / "templates"):
             html = open(f"../templates/map.html").read()
             self.legends = self.get_legends()
-
-            if self.layer_toggles:
-                self.layer_toggles = self.get_layer_toggles()
-
+            self.toggles = self.get_toggles()
             return yatl.render(
                 html, delimiters="[[ ]]", context=dict(token=token, map1=self),
             )
@@ -264,8 +261,7 @@ class Map:
         """
         legends = DIV()
         for layer in self.layers:
-            legend = layer.get("legend", False)
-            if not legend:
+            if not layer.get("show_legend", self.show_legends):
                 continue
             legend = DIV(_id=f"{layer['id']}_legend")
             for label, color in layer["legend"]:
@@ -279,11 +275,11 @@ class Map:
             legends.append(legend)
         return legends
 
-    def get_layer_toggles(self):
+    def get_toggles(self):
         """ add buttons to toggle layers """
         fg = DIV(_class="filter-group")
         for layer in self.layers:
-            if not layer.get("toggle", True):
+            if not layer.get("show_toggle", self.show_toggles):
                 continue
             try:
                 checked = layer["layout"]["visibility"] == "visible"

@@ -18,9 +18,8 @@ class Twomaps:
 
     def __init__(self, map1, map2, template="slider"):
         """
+        combine two maps on single page e.g. slider, vertical
         :param template: template.html or just template
-
-        todo: create a template for side by side comparison
         """
         self.map1 = map1
         self.map2 = map2
@@ -35,7 +34,11 @@ class Twomaps:
         """
         with tempdir(Path(__file__).parent.parent / "templates"):
             html = open(self.template).read()
+
+            # use legends and toggles from map1 only
             self.map1.legends = self.map1.get_legends()
+            self.map1.toggles = self.map1.get_toggles()
+
             return yatl.render(
                 html,
                 delimiters="[[ ]]",
