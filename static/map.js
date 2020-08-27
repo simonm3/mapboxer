@@ -7,6 +7,7 @@ var map1 = new mapboxgl.Map(
     [[=XML(map1.root())]]
 );
 map1.on('load', function () {
+    console.log("map1 load")
     // sources
     [[for k, v in map1.sources.items():]]
     map1.addSource('[[=k]]', [[=XML(v)]]);

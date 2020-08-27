@@ -34,6 +34,8 @@ m1.title = f"Local elections {year2} (left of slider is {year1})"
 s = Twomaps(m1, m2, "slider")
 iframe(s.html())
 
+2 divs is 2 maps with flex......turn off flex?
+
 s.save("local_slider2015")
 
 
