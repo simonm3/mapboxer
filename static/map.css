@@ -21,10 +21,15 @@ body {
     overflow: hidden;
 }
 
+#maps {
+    height: 100%;
+}
+
 .map {
     height: 100%;
-    width: 100%;
 }
+
+/* slider requires these settings */
 
 #slider>.map {
     position: absolute;
@@ -46,7 +51,6 @@ body {
     position: absolute;
     top: 60px;
     right: 10px;
-    z-index: 10;
 }
 
 /* titlebar *******************************************/
