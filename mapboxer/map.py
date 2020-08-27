@@ -26,7 +26,7 @@ class Map:
     """ mapbox map """
 
     # root parameters passed to mapboxgl.map. openstreetmap centred on UK.
-    container = "map"
+    container = "map1"
     style = "mapbox://styles/mapbox/streets-v11"
     center = [-1.5, 53]
     zoom = 5

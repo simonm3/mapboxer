@@ -21,15 +21,16 @@ body {
     overflow: hidden;
 }
 
-.maps {
-    display: flex;
+.map {
     height: 100%;
+    width: 100%;
 }
 
-.map {
+#slider>.map {
     position: absolute;
     top: 50px;
     bottom: 0;
+    height: auto;
     width: 100%;
 }
 

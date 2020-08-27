@@ -32,12 +32,16 @@
         <span id="geocoder"></span>
         <span id="title">[[=map1.title]]</span>
     </div>
+
     [[block map]]
-    <div id="map" class="map"></div>
-    <div id="rightblock">
-        <div id="filter-group">[[=map1.layer_toggles]]</div>
-        <div id="legends">[[=map1.legends]]</div>
+    <div id="maps">
+        <div id="map1" class="map"></div>
+        <div id="rightblock">
+            <div id="filter-group">[[=map1.layer_toggles]]</div>
+            <div id="legends">[[=map1.legends]]</div>
+        </div>
     </div>
+
     <script>
         [[include "../static/map.js"]]
     </script>

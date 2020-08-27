@@ -26,6 +26,5 @@ map2.on('load', function () {
 }
 [[pass]]
 
-let compare = new mapboxgl.Compare(map1, map2, '#slider');
-compare.setSlider(0) //$("#comparison-container").width())
+syncMaps(map1, map2);
 })

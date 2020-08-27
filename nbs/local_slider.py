@@ -30,12 +30,14 @@ year2=2015
 wards, wardcentres = clean.local(year2)
 m2 = show.get_map(wards[:50], wardcentres[:50], const[:50], constcentres[:50], "party")
 
+m1.container="map"
+
+iframe(m1.html())
+
 m1.title = f"Local elections {year2} (left of slider is {year1})"
 s = Twomaps(m1, m2, "slider")
 iframe(s.html())
 
-2 divs is 2 maps with flex......turn off flex?
-
-s.save("local_slider2015")
+s.save("temp")
 
 
