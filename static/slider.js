@@ -17,6 +17,7 @@ map2.on('load', function () {
     // When the checkbox changes, update the visibility of the layer.
     $("#" + layername).change(function (e) {
         // show/hide fill layer
+        map1.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none');
         map2.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none');
 
         // show/hide legend
