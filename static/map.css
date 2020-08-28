@@ -55,10 +55,8 @@ body {
     width: 100%;
 }
 
-/* for border between maps */
-
-.bottom {
-    border-bottom-style: dashed;
+.top_separator {
+    border-top-style: dashed;
 }
 
 /* titlebar *******************************************/

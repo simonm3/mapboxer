@@ -34,16 +34,11 @@ def get_ratio_catslabels(df):
 
 
 def get_map(wards, wardcentres, const, constcentres, shading="ratio"):
-    """ configure map with ward and constituency boundaries.
+    """
+    map with ward and constituency boundaries; ward names; consituency results 2010; shading of party/ldratio
 
     :param shading: data column to use for shading. "ratio" or "party". 
     :return: mapbox map
-
-    Alternative shading requires configuration::
-    
-        labels in order required for legend
-        colorset tailored to categories
-        cats None for categorical. see get_shading for qcut or cut.
     """
     m = Map()
     m.center = [-1.7083, 52.1917]
@@ -75,25 +70,25 @@ def get_map(wards, wardcentres, const, constcentres, shading="ratio"):
     wards = wards[[x, "geometry"]]
     wardcentres = wardcentres[["wardname", "geometry"]]
 
-    # data sources
-    # m.add_source("const", const[:50])
-    # m.add_source("wards", wards)
-    # m.add_source("wardcentres", wardcentres)
-    # m.add_source("constcentres", constcentres)
+    # data
+    m.add_source("const", const)
+    m.add_source("wards", wards)
+    m.add_source("wardcentres", wardcentres)
+    m.add_source("constcentres", constcentres)
 
     # layers
-    # m.add_layer("constituencies", type="line", source="const", paint=dict(line_width=3))
-    # m.add_layer(
-    #     "shading", type="fill", source="wards", x=shading, cats=cats, colorset=colorset,
-    # )
-    # m.add_layer("wards", type="line", source="wards")
-    # m.add_layer("wardnames", type="symbol", source="wardcentres", x="wardname")
-    # m.add_layer(
-    #     "GE2010_pcwin",
-    #     type="symbol",
-    #     source="constcentres",
-    #     x="ratio",
-    #     layout=dict(text_size=40),
-    # )
+    m.add_layer("constituencies", type="line", source="const", paint=dict(line_width=3))
+    m.add_layer(
+        "shading", type="fill", source="wards", x=shading, cats=cats, colorset=colorset,
+    )
+    m.add_layer("wards", type="line", source="wards")
+    m.add_layer("wardnames", type="symbol", source="wardcentres", x="wardname")
+    m.add_layer(
+        "GE2010_pcwin",
+        type="symbol",
+        source="constcentres",
+        x="ratio",
+        layout=dict(text_size=40),
+    )
 
     return m

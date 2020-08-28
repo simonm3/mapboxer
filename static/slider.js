@@ -9,7 +9,7 @@ map2.on('load', function () {
 
     // layers
     [[for layer in map2.layers:]]
-    map2.addLayer([[=XML(layer)]]);
+    map2.addLayer([[=XML(json.dumps(layer))]]);
     [[pass]]
 
     // show/hide layer and legend

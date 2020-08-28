@@ -32,6 +32,7 @@ class Map:
     zoom = 5
 
     def __init__(self):
+        # variables declared in init are not part of root
         pre_init = self.__dict__.copy()
 
         # format
@@ -40,20 +41,20 @@ class Map:
         # data
         self.sources = dict()
 
-        # extra to mapbox ###################################
+        # extra to mapbox
         # [square, triangle]
         self.shapeset = ["\u25a0", "\u25b2"]
         self.colorset = px.colors.qualitative.Set3
         self.grayscale = lambda cats: [
             c.hex for c in Color("white").range_to(Color("black"), cats)
         ]
-        # defaults. can be overridden by each layer
-        self.show_legends = True
-        self.show_toggles = True
+        self.showlegends = True
+        self.showtoggles = True
+        self.legends = None
+        self.toggles = None
         self.sourcesdf = dict()
         self.title = ""
 
-        # variables declared in init are not part of root
         self.excluded = None
         self.excluded = set(self.__dict__) - set(pre_init)
 
@@ -85,8 +86,8 @@ class Map:
         :param labels: default is cats for categoric; "<value" for continuous
         :param method: "interpolate" for linear change over range (only relevant for continuous scale)
         :param visible: visibility of layer
-        :param show_legend: False to not show legend. default True.
-        :param show_toggle: False to not show toggle. default True.
+        :param showlegend: False to not show legend. default True.
+        :param showtoggle: False to not show toggle. default True.
         :param kwargs: any mapbox layer parameters in addition to the above
 
         Layer types
@@ -152,7 +153,7 @@ class Map:
         dd.layout.setdefault("text_size", 15)
 
         # legend
-        if dd.get("show_legend", True):
+        if dd.get("showlegend", True):
             labels = dd.get("labels", cats)
             dd.legend = list(zip(labels, colorset)) + list(zip(ycats, shapeset))
 
@@ -170,7 +171,7 @@ class Map:
         dd.paint.circle_color.append("white")
 
         # legend
-        if dd.get("show_legend", True):
+        if dd.get("showlegend", True):
             labels = dd.get("labels", cats)
             dd.legend = list(zip(labels, colorset))
 
@@ -221,7 +222,7 @@ class Map:
                 dd.paint.fill_color.extend(cat)
 
         # legend
-        if dd.get("show_legend", True):
+        if dd.get("showlegend", True):
             dd.legend = list(zip(labels, colorset))
 
     # output ###########################################################################
@@ -262,7 +263,9 @@ class Map:
         """
         legends = DIV()
         for layer in self.layers:
-            if not layer.get("show_legend", self.show_legends) or "legend" not in layer:
+            if not layer.get("showlegend", self.showlegends):
+                continue
+            if "legend" not in layer:
                 continue
             legend = DIV(_id=f"{layer['id']}_legend")
             for label, color in layer["legend"]:
@@ -280,7 +283,7 @@ class Map:
         """ add buttons to toggle layers """
         fg = DIV(_class="filter-group")
         for layer in self.layers:
-            if not layer.get("show_toggle", self.show_toggles):
+            if not layer.get("showtoggle", self.showtoggles):
                 continue
             try:
                 checked = layer["layout"]["visibility"] == "visible"
