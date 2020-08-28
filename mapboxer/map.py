@@ -40,13 +40,14 @@ class Map:
         # data
         self.sources = dict()
 
-        # extra to mapbox
+        # extra to mapbox ###################################
         # [square, triangle]
         self.shapeset = ["\u25a0", "\u25b2"]
         self.colorset = px.colors.qualitative.Set3
         self.grayscale = lambda cats: [
             c.hex for c in Color("white").range_to(Color("black"), cats)
         ]
+        # defaults. can be overridden by each layer
         self.show_legends = True
         self.show_toggles = True
         self.sourcesdf = dict()
@@ -261,7 +262,7 @@ class Map:
         """
         legends = DIV()
         for layer in self.layers:
-            if not layer.get("show_legend", self.show_legends):
+            if not layer.get("show_legend", self.show_legends) or "legend" not in layer:
                 continue
             legend = DIV(_id=f"{layer['id']}_legend")
             for label, color in layer["legend"]:
