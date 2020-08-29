@@ -20,6 +20,8 @@ from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
+# pandas utils ###############################################
+
 
 def replace_quotes(df):
     """ remove single quotes from all str columns 
@@ -33,6 +35,84 @@ def replace_quotes(df):
             log.warning(f"cannot remove quotes from {col}")
 
 
+def fuzzymerge(df1, df2, key, minscore=None):
+    """ merges on fuzzy text key
+    exact matches first; then unmatched df1 to closest unmatched on df2
+    left join that expects zero or one match in df2
+    warns if duplicates matches
+    
+    :param key: column to merge on. must be in df1 and df2
+    :param minscore: if set then returns only matches above this
+    :return: merged dataframe. if minscore=None then show scores to identify appropriate minscore cutoff.
+
+    e.g. match area names on two data sources such as "Birmingham, West" and "West Birmingham"
+    """
+    df1 = df1.copy()
+    df2 = df2.copy()
+
+    # get exact matches first as faster
+    merged = df1.merge(df2[[key]], on=key, how="outer", indicator=True)
+    unmatched1 = merged[merged._merge == "left_only"][key].tolist()
+    unmatched2 = merged[merged._merge == "right_only"][key].tolist()
+
+    # fuzzy matches. mapper will contain list of tuples (unmatched1, best match, score)
+    mapper = []
+    for v in unmatched1:
+        # returns tuple (best match, score)
+        res = process.extractOne(v, unmatched2)
+        if not res:
+            res = (v, "no match", 0)
+        mapper.append([v, *res])
+    mapper = pd.DataFrame(mapper, columns=[key, "fuzzykey", "fuzzyscore"])
+    df1 = df1.merge(mapper, on=key, how="left")
+
+    # matched
+    matched = df1[key].isin(df2[key])
+    df1.loc[matched, "fuzzykey"] = df1[key]
+    df1.loc[matched, "fuzzyscore"] = 100
+
+    # fuzzy match
+    res = df1.merge(df2.rename(columns={key: "fuzzykey"}), on="fuzzykey", how="left")
+    fuz = ["fuzzykey", "fuzzyscore"]
+    if minscore is None:
+        # to check what minscore should be
+        return res.sort_values("fuzzyscore").set_index([key] + fuz)
+    else:
+        # after setting minscore
+        res = res[res.fuzzyscore > minscore]
+        dupes = res.loc[res.fuzzykey.duplicated(keep=False), fuz]
+        if len(dupes) > 0:
+            log.warning(f"some duplicate matches\n{dupes}")
+        return res.drop(fuz, axis=1).set_index(key)
+
+
+def mapply(df, func, **kwargs):
+    """ apply func to dataframe using multiprocessing to split across cores
+    :param df: pandas dataframe
+    :param func: function to apply to df
+    :param ncores: number of cores. default cpu_count.
+    :param nsplit: number of splits in dataframe. default cpu_count.
+    :param kwargs: all kwargs not listed above are passed to func
+    func is any function and can be tested using basic df.apply
+    """
+    ncores = kwargs.pop("ncores", os.cpu_count())
+    nsplits = kwargs.pop("nsplits", os.cpu_count())
+    # partial enables additional parameters as pool.map just accepts iterator
+    func = partial(func, **kwargs)
+    chunks = np.array_split(df, nsplits)
+    pool = Pool(ncores)
+    res = tqdm(pool.map(func, chunks), total=nsplits)
+    df = pd.concat(res)
+    pool.close()
+    pool.join()
+    return df
+
+
+pd.DataFrame.mapply = mapply
+
+# general utils ###############################################
+
+
 @contextlib.contextmanager
 def tempdir(path):
     """ change folder temporarily """
@@ -42,18 +122,6 @@ def tempdir(path):
         yield
     finally:
         os.chdir(saved)
-
-
-def geojson(gdf):
-    """ return geojson from geodataframe
-    includes geometry, crs, properties (from other columns)
-    """
-    if not isinstance(gdf, gpd.GeoDataFrame):
-        gdf = gpd.GeoDataFrame(gdf)
-    f = BytesIO()
-    gdf.to_file(f, driver="GeoJSON")
-
-    return json.loads(f.getvalue())
 
 
 def change_keys(obj, convert=None):
@@ -79,52 +147,27 @@ def change_keys(obj, convert=None):
     return obj
 
 
-def fuzzymerge(df1, df2, key):
-    """ merge df1 to best fit on df2
-
-    :param key: column to merge on. must be in df1 and df2
-    :return: merged dataframe sorted by fuzzyscore to enable checking lowest scores
-
-    e.g. match area names on two data sources such as "Birmingham, West" and "West Birmingham"
-    
-    """
-    df1 = df1.copy()
-    df2 = df2.copy()
-
-    # unmatched
-    merged = df1.merge(df2[[key]], on=key, how="outer", indicator=True)
-    unmatched1 = merged[merged._merge == "left_only"][key].tolist()
-    unmatched2 = merged[merged._merge == "right_only"][key].tolist()
-
-    # map the unmatched
-    mapper = []
-    for v in unmatched1:
-        res = process.extractOne(v, unmatched2)
-        if not res:
-            res = (v, "no match", 0)
-        mapper.append([v, *res])
-        # faster but may cause errors
-        # unmatched2.remove(res[0])
-    mapper = pd.DataFrame(mapper, columns=[key, "fuzzykey", "fuzzyscore"])
-    df1 = df1.merge(mapper, on=key, how="left")
-
-    # matched
-    matched = df1[key].isin(df2[key])
-    df1.loc[matched, "fuzzykey"] = df1[key]
-    df1.loc[matched, "fuzzyscore"] = 100
-
-    # fuzzy match
-    res = df1.merge(df2.rename(columns={key: "fuzzykey"}), on="fuzzykey", how="left")
-    cols = [key, "fuzzykey", "fuzzyscore"]
-    return res.sort_values("fuzzyscore")[cols + list(set(res.columns) - set(cols))]
-
-
 def iframe(html):
     """ wrap html page in iframe
     """
     html = html.replace('"', "'")
     iframe = f'<iframe id="mapframe", srcdoc="{html}" style="border: 0" width="100%", height="500px"></iframe>'
     return HTML(iframe)
+
+
+# geo utils ###############################################################
+
+
+def geojson(gdf):
+    """ return geojson from geodataframe
+    includes geometry, crs, properties (from other columns)
+    """
+    if not isinstance(gdf, gpd.GeoDataFrame):
+        gdf = gpd.GeoDataFrame(gdf)
+    f = BytesIO()
+    gdf.to_file(f, driver="GeoJSON")
+
+    return json.loads(f.getvalue())
 
 
 def get_voronoi(df):
@@ -190,33 +233,3 @@ def deg2km(deg, a=(50.8, 2.7)):
     :param a: latitude, longtitude of point. default is Dorset, uk.
     """
     return deg / km2deg(1)
-
-
-def mapply(df, func, **kwargs):
-    """ apply func to dataframe using multiprocessing to split across cores
-    :param df: pandas dataframe
-    :param func: function to apply to df
-    :param ncores: number of cores. default cpu_count.
-    :param nsplit: number of splits in dataframe. default cpu_count.
-    :param kwargs: all kwargs not listed above are passed to func
-    func is any function and can be tested using basic df.apply
-    """
-    ncores = kwargs.pop("ncores", os.cpu_count())
-    nsplits = kwargs.pop("nsplits", os.cpu_count())
-    # partial enables additional parameters as pool.map just accepts iterator
-    func = partial(func, **kwargs)
-    chunks = np.array_split(df, nsplits)
-    pool = Pool(ncores)
-    res = tqdm(pool.map(func, chunks), total=nsplits)
-    df = pd.concat(res)
-    pool.close()
-    pool.join()
-    return df
-
-
-pd.DataFrame.mapply = mapply
-
-
-def test1():
-    for x in tqdm(range(100)):
-        sleep(1)
