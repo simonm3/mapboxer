@@ -13,9 +13,9 @@ map2.on('load', function () {
     [[pass]]
 
     // show/hide map1 layer and legend
-    for (layername of [[=XML([layer["id"] for layer in map1.layers])]]) {
+    for (layerid of [[=XML([layer["id"] for layer in map1.layers])]]) {
     // When the checkbox changes, update the visibility of the layer and legend
-    $("#" + layername).change(function (e) {
+    $("#" + layerid).change(function (e) {
         map1.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none');
         map2.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none');
         $("#" + e.target.id + "_legend").toggle()

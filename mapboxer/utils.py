@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 from fuzzywuzzy import fuzz, process
 from geopy.distance import geodesic
-from IPython.display import HTML
 from scipy.spatial import Voronoi
 from shapely.geometry import MultiPoint, Point, Polygon
 from tqdm.auto import tqdm
@@ -145,14 +144,6 @@ def change_keys(obj, convert=None):
         return new
 
     return obj
-
-
-def iframe(html):
-    """ wrap html page in iframe
-    """
-    html = html.replace('"', "'")
-    iframe = f'<iframe id="mapframe", srcdoc="{html}" style="border: 0" width="100%", height="500px"></iframe>'
-    return HTML(iframe)
 
 
 # geo utils ###############################################################

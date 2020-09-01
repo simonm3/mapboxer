@@ -39,6 +39,9 @@ class Twomaps:
             self.map1.legends = self.map1.get_legends()
             self.map1.toggles = self.map1.get_toggles()
 
+            self.map2.center = self.map1.center
+            self.map2.zoom = self.map1.zoom
+
             return yatl.render(
                 html,
                 delimiters="[[ ]]",

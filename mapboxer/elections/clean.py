@@ -29,8 +29,7 @@ def ge(year):
         res_ge.loc[res_ge.const == b, "const"] = a
 
     # merge (fuzzy)
-    const = fuzzymerge(const, res_ge, "const")
-    const = const[const.fuzzyscore >= 90]
+    const = fuzzymerge(const, res_ge, "const", 90)
     const = const[["ratio", "geometry"]]
 
     # centroids

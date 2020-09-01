@@ -58,31 +58,41 @@ class Map:
         self.excluded = None
         self.excluded = set(self.__dict__) - set(pre_init)
 
+    def _repr_html_(self):
+        """ display in notebook as iframe """
+        html = self.html().replace('"', "'")
+        iframe = f'<iframe id="mapframe", srcdoc="{html}" style="border: 0" width="100%", height="500px"></iframe>'
+        return iframe
+
     # input #######################################################
 
-    def add_source(self, id=None, data=None, **kwargs):
+    def add_source(self, name=None, data=None, **kwargs):
         """ add a data source. store raw dataframe and geojson
-        :param id: name of source that layers can use to identify
+        :param name: name of source
         :param data: geodataframe
         :param kwargs: any mapbox layer parameters in addition to the above
+
+        only call this when sharing source between layers. otherwise pass source as parameter to add_layer.
         """
         # raw dataframe
-        kwargs["data"] = data
-        kwargs.setdefault("type", "geojson")
-        self.sourcesdf[id] = kwargs
+        self.sourcesdf[name] = data
 
-        # converted to geojson
-        s = kwargs.copy()
-        s["data"] = geojson(s["data"])
-        self.sources[id] = json.dumps(s)
+        # geojson
+        kwargs.setdefault("type", "geojson")
+        kwargs["data"] = geojson(data)
+        self.sources[name] = json.dumps(kwargs)
 
     def add_layer(self, id=None, **kwargs):
         """ add a layer to the map with defaults for text_color, text_size, fill colors, legend
-        :param id: name of layer
-        :param x: source data column name
+        converts keys to those used by mapbox
+
+        :param id: id of layer
+        :param source: id of source or dataframe
+        :param x: first source column name
+        :param y: second source column name
         :param colorset: list of colors to use for shading. defaults to Set3.
-        :param cats: categories in order required for legend. For continuous int for quantiles; list for cuts.
-        :param ycats: categories for y axis
+        :param cats: order for legend. default categoric=unique; int=quantiles; numeric list=cuts.
+        :param ycats: cats for y axis
         :param labels: default is cats for categoric; "<value" for continuous
         :param method: "interpolate" for linear change over range (only relevant for continuous scale)
         :param visible: visibility of layer
@@ -106,9 +116,19 @@ class Map:
         dd = autodict(kwargs)
         dd.id = id
         dd.layout.visibility = "visible" if dd.pop("visible", True) else "none"
-        df = self.sourcesdf[kwargs["source"]]["data"]
+
+        # move source data to sources
+        if not isinstance(dd.source, str):
+            # minimise to required cols
+            cols = ["geometry"]
+            for col in ["x", "y"]:
+                if col in dd:
+                    cols.append(col)
+            self.add_source(id, dd.source)
+            dd.source = id
 
         # defaults for layers
+        df = self.sourcesdf[dd.source]
         if dd.type == "symbol":
             self.add_layer_text(dd, df)
         elif dd.type == "fill":
@@ -126,36 +146,6 @@ class Map:
         dd.paint.setdefault("text_color", "#2a3f5f")
         dd.layout.setdefault("text_field", ["get", dd.x])
         dd.layout.setdefault("text_size", 10)
-
-    def add_layer_shape(self, dd, df):
-        """ create json for points with shape*color. uses text with shape font """
-        dd.type = "symbol"
-
-        # data
-        colorset = dd.get("colorset", self.colorset)
-        shapeset = dd.get("shapeset", self.shapeset)
-        cats = dd.get("cats", df[dd.x].unique())
-        ycats = dd.get("ycats", df[dd.y].unique())
-
-        # color
-        dd.paint.text_color = ["match", ["get", dd.x]]
-        for cat in list(zip(cats, colorset)):
-            dd.paint.text_color.extend(cat)
-        dd.paint.text_color.append("white")
-
-        # shape
-        dd.layout.text_allow_overlap = True
-        dd.layout.setdefault("text_field", ["get", dd.y])
-        dd.layout.text_field = ["match", ["get", dd.y]]
-        for cat in list(zip(ycats, shapeset)):
-            dd.layout.text_field.extend(cat)
-        dd.layout.text_field.append("X")
-        dd.layout.setdefault("text_size", 15)
-
-        # legend
-        if dd.get("showlegend", True):
-            labels = dd.get("labels", cats)
-            dd.legend = list(zip(labels, colorset)) + list(zip(ycats, shapeset))
 
     def add_layer_circle(self, dd, df):
         """ create json for circle/point layer """
@@ -224,6 +214,36 @@ class Map:
         # legend
         if dd.get("showlegend", True):
             dd.legend = list(zip(labels, colorset))
+
+    def add_layer_shape(self, dd, df):
+        """ create json for points with shape*color. uses text with shape font """
+        dd.type = "symbol"
+
+        # data
+        colorset = dd.get("colorset", self.colorset)
+        shapeset = dd.get("shapeset", self.shapeset)
+        cats = dd.get("cats", df[dd.x].unique())
+        ycats = dd.get("ycats", df[dd.y].unique())
+
+        # color
+        dd.paint.text_color = ["match", ["get", dd.x]]
+        for cat in list(zip(cats, colorset)):
+            dd.paint.text_color.extend(cat)
+        dd.paint.text_color.append("white")
+
+        # shape
+        dd.layout.text_allow_overlap = True
+        dd.layout.setdefault("text_field", ["get", dd.y])
+        dd.layout.text_field = ["match", ["get", dd.y]]
+        for cat in list(zip(ycats, shapeset)):
+            dd.layout.text_field.extend(cat)
+        dd.layout.text_field.append("X")
+        dd.layout.setdefault("text_size", 15)
+
+        # legend
+        if dd.get("showlegend", True):
+            labels = dd.get("labels", cats)
+            dd.legend = list(zip(labels, colorset)) + list(zip(ycats, shapeset))
 
     # output ###########################################################################
 

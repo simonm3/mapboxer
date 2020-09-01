@@ -18,8 +18,8 @@ map1.on('load', function () {
     [[pass]]
 
     // toggle layer/legend
-    for (layername of [[=XML([layer["id"] for layer in map1.layers])]]) {
-    $("#" + layername).change(function (e) {
+    for (layerid of [[=XML([layer["id"] for layer in map1.layers])]]) {
+    $("#" + layerid).change(function (e) {
         map1.setLayoutProperty(e.target.id, 'visibility', e.target.checked ? 'visible' : 'none'
         );
         $("#" + e.target.id + "_legend").toggle()
