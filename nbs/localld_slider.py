@@ -14,8 +14,8 @@
 # ---
 
 from ipstartup import *
-from mapboxer import Twomaps
-from mapboxer.elections import clean, get, show
+from pymapbox import Twomaps
+from pymapbox.elections import clean, get, show
 
 const, constcentres = clean.general()
 

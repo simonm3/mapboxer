@@ -14,16 +14,16 @@
 # ---
 
 from ipstartup import *
-from mapboxer.elections import get, clean, show
-from mapboxer import Twomaps
+from pymapbox.elections import get, clean, show
+from pymapbox import Twomaps
 
 const, constcentres = clean.ge(2010)
 
-year1=2011
+year1 = 2011
 wards, wardcentres = clean.local(year1)
 m1 = show.get_map(wards, wardcentres, const, constcentres, "party")
 
-year2=2015
+year2 = 2015
 wards, wardcentres = clean.local(year2)
 m2 = show.get_map(wards, wardcentres, const, constcentres, "party")
 m1.title = f"Local election {year2} (left of slider is {year1})"
@@ -32,5 +32,4 @@ s = Twomaps(m1, m2, "slider")
 s
 
 s.save("local_slider")
-
 

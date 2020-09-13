@@ -7,14 +7,14 @@ overwritten when autogen is rerun.
 from setuptools import setup
 
 params = dict(
-    name='mapboxer',
-    description='mapboxer',
+    name='pymapbox',
+    description='This is a thin python wrapper for mapbox. It generates javscript to execute mapboxgl and create mapbox maps.',
     version='0.0.0',
-    url='',
-    install_requires=['ipython', 'pandas', 'geopandas',
-                      'yatl', 'colour', 'pyyaml', 'plotly'],
-    packages=['mapboxer', 'mapboxer.elections'],
-    package_data={'mapboxer': ['base.css', 'base.html']},
+    url='https://github.com/simonm3/mapboxer.git',
+    install_requires=['ipyleaflet', 'numpy', 'plotly', 'geopandas', 'colour', 'pyyaml',
+                      'shapely', 'ipython', 'geopy', 'pandas', 'yatl', 'tqdm', 'fuzzywuzzy', 'folium', 'scipy'],
+    packages=['pymapbox', 'pymapbox.elections'],
+    package_data={},
     include_package_data=True,
     py_modules=[],
     scripts=None)

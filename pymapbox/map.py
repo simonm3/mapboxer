@@ -85,6 +85,7 @@ class Map:
 
     def add_layer(self, id=None, **kwargs):
         """ add a layer to the map
+        
         * full mapbox style specification via kwargs
         * dotdict parameters with underscores converted to dashes e.g. paint.fill_color
         * additional parameters to simplify e.g. define categories/labels/colors from data or explicitly

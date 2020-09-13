@@ -14,7 +14,7 @@
 # ---
 
 from ipstartup import *
-from mapboxer.elections import get, clean, show
+from pymapbox.elections import get, clean, show
 
 const, constcentres = clean.ge(2010)
 

@@ -6,7 +6,7 @@ from os.path import expanduser
 import pandas as pd
 import yaml
 
-from mapboxer.map import Map
+from pymapbox.map import Map
 
 from . import get
 
@@ -51,7 +51,7 @@ def get_map(wards, wardcentres, const, constcentres, x="ratio"):
 
 def get_ipy(wards, wardcentres, const, constcentres, x="ratio"):
     from ipyleaflet import Map, Marker, GeoJSON, basemaps, GeoData, LayersControl
-    from mapboxer.utils import geojson
+    from pymapbox.utils import geojson
 
     m = Map()
     m.center = [52.1917, -1.7083]

@@ -1,11 +1,13 @@
 This is a thin python wrapper for mapbox. It generates javscript to execute mapboxgl and create mapbox maps.
 
+Why mapbox? There are many alternatives that work with smaller datasets but mapbox is the only one of those I tried that can cope with larger datasets.
+
 Create a map using minimal defaults
 -----------------------------------
 
 Set root settings as required::
 
-    from mapboxer import Map
+    from pymapbox import Map
     m = Map()
     m.center = [-1.7083, 52.1917]
     m.zoom = 10
