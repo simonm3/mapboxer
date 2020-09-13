@@ -2,6 +2,12 @@ This is a thin python wrapper for mapbox. It generates javscript to execute mapb
 
 Why mapbox? There are many alternatives that work with smaller datasets but of the ones I tried mapbox was easily most responsive with larger datasets.
 
+Install
+-------
+    ::
+    
+    pip install pymapbox
+
 Create a map using minimal defaults
 -----------------------------------
 
