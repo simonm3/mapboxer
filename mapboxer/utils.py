@@ -75,18 +75,23 @@ def fuzzymerge(df1, df2, key, minscore=None):
     fuz = ["fuzzykey", "fuzzyscore"]
     if minscore is None:
         # to check what minscore should be
-        return res.sort_values("fuzzyscore").set_index([key] + fuz)
+        res = res.sort_values("fuzzyscore").set_index([key] + fuz)
     else:
         # after setting minscore
         res = res[res.fuzzyscore > minscore]
-        dupes = res.loc[res.fuzzykey.duplicated(keep=False), fuz]
-        if len(dupes) > 0:
-            log.warning(f"some duplicate matches\n{dupes}")
-        return res.drop(fuz, axis=1).set_index(key)
+
+    # warn if dupes
+    dupes = res.loc[res.fuzzykey.duplicated(keep=False), fuz]
+    if len(dupes) > 0:
+        log.warning(f"some duplicate matches\n{dupes}")
+
+    if minscore:
+        res = res.drop(fuz, axis=1).set_index(key)
+    return res
 
 
 def mapply(df, func, **kwargs):
-    """ apply func to dataframe using multiprocessing to split across cores
+    """ DataFrame.apply using multiprocessing to split across cores
     :param df: pandas dataframe
     :param func: function to apply to df
     :param ncores: number of cores. default cpu_count.

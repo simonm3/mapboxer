@@ -14,23 +14,23 @@
 # ---
 
 from ipstartup import *
-import geopandas as gpd
-import plotly.express as px
 from mapboxer.elections import get, clean, show
-from mapboxer.utils import iframe
+from mapboxer import Twomaps
 
 const, constcentres = clean.ge(2010)
 
-year = 2017
-wards, wardcentres = clean.local(year)
+year1=2011
+wards, wardcentres = clean.local(year1)
+m1 = show.get_map(wards, wardcentres, const, constcentres, "party")
 
-import folium
-m = folium.Map(location= [52.1917, -1.7083], zoom_start=12)
-m.zoom_start=12
-m
+year2=2015
+wards, wardcentres = clean.local(year2)
+m2 = show.get_map(wards, wardcentres, const, constcentres, "party")
+m1.title = f"Local election {year2} (left of slider is {year1})"
 
-m = show.get_fol(wards, wardcentres, const, constcentres, "party")
-m.title = f"Local election {year}"
-m
+s = Twomaps(m1, m2, "slider")
+s
 
-m.save(f"folium{year}.html")
+s.save("local_slider")
+
+

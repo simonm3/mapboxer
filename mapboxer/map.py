@@ -72,7 +72,8 @@ class Map:
         :param data: geodataframe
         :param kwargs: any mapbox layer parameters in addition to the above
 
-        only call this when sharing source between layers. otherwise pass source as parameter to add_layer.
+        only required when sharing source between layers
+        normally easier to just pass source as parameter to add_layer.
         """
         # raw dataframe
         self.sourcesdf[name] = data
@@ -83,35 +84,44 @@ class Map:
         self.sources[name] = json.dumps(kwargs)
 
     def add_layer(self, id=None, **kwargs):
-        """ add a layer to the map with defaults for text_color, text_size, fill colors, legend
-        converts keys to those used by mapbox
+        """ add a layer to the map
+        * full mapbox style specification via kwargs
+        * dotdict parameters with underscores converted to dashes e.g. paint.fill_color
+        * additional parameters to simplify e.g. define categories/labels/colors from data or explicitly
+        * defaults that can be overridden
+        * accepts geopandas data
+        * option to add legend and layer toggle
 
+        Required:
         :param id: id of layer
-        :param source: id of source or dataframe
+        :param source: name of source or geodataframe
         :param x: first source column name
-        :param y: second source column name
+
+        Optional:
+        :param cats: sequence for legend; string list=categories; numeric list=cuts; int=quantiles.
         :param colorset: list of colors to use for shading. defaults to Set3.
-        :param cats: order for legend. default categoric=unique; int=quantiles; numeric list=cuts.
-        :param ycats: cats for y axis
         :param labels: default is cats for categoric; "<value" for continuous
         :param method: "interpolate" for linear change over range (only relevant for continuous scale)
+        :param y: second source column name
+        :param ycats: cats for y axis
         :param visible: visibility of layer
         :param showlegend: False to not show legend. default True.
         :param showtoggle: False to not show toggle. default True.
         :param kwargs: any mapbox layer parameters in addition to the above
 
-        Layer types
-        -----------
-        symbol=text
-            text by default
-            can add image using kwargs.
-        fill=shading
+        Layer types as per mapbox style specification
+        ---------------------------------------------
+        symbol
+            if y category
+                color+shape points using font for shapes
+            else
+                text only by default. can add image using kwargs.
+        fill
             categoric or interpolated colors
-        circle=color points
-            faster rendering than symbol images
-        shape=color+shape points
-            mapbox symbol using text to add shapes
-            not as good as circles especially on zoom
+        circle
+            color points with faster rendering than symbol images
+        others (use kwargs)
+            background, line, raster, fill-extrusion, heatmap, hillshade
         """
         dd = autodict(kwargs)
         dd.id = id
@@ -130,18 +140,19 @@ class Map:
         # defaults for layers
         df = self.sourcesdf[dd.source]
         if dd.type == "symbol":
-            self.add_layer_text(dd, df)
+            if "y" in dd:
+                self.add_layer_shape(dd, df)
+            else:
+                self.add_layer_symbol(dd, df)
         elif dd.type == "fill":
             self.add_layer_fill(dd, df)
         elif dd.type == "circle":
             self.add_layer_circle(dd, df)
-        elif dd.type == "shape":
-            self.add_layer_shape(dd, df)
 
         kwargs = change_keys(dd).to_dict()
         self.layers.append(kwargs)
 
-    def add_layer_text(self, dd, df):
+    def add_layer_symbol(self, dd, df):
         """ create json for plain grey text with no icon """
         dd.paint.setdefault("text_color", "#2a3f5f")
         dd.layout.setdefault("text_field", ["get", dd.x])
@@ -217,8 +228,6 @@ class Map:
 
     def add_layer_shape(self, dd, df):
         """ create json for points with shape*color. uses text with shape font """
-        dd.type = "symbol"
-
         # data
         colorset = dd.get("colorset", self.colorset)
         shapeset = dd.get("shapeset", self.shapeset)

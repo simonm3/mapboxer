@@ -19,7 +19,7 @@ class Twomaps:
     def __init__(self, map1, map2, template="slider"):
         """
         combine two maps on single page e.g. slider, vertical
-        :param template: template.html or just template
+        :param template: filename for template. default extension is html.
         """
         self.map1 = map1
         self.map2 = map2
@@ -28,6 +28,12 @@ class Twomaps:
         if not os.path.splitext(template)[-1]:
             template = template + ".html"
         self.template = template
+
+    def _repr_html_(self):
+        """ display in notebook as iframe """
+        html = self.html().replace('"', "'")
+        iframe = f'<iframe id="mapframe", srcdoc="{html}" style="border: 0" width="100%", height="500px"></iframe>'
+        return iframe
 
     def html(self):
         """ return html page
@@ -39,6 +45,7 @@ class Twomaps:
             self.map1.legends = self.map1.get_legends()
             self.map1.toggles = self.map1.get_toggles()
 
+            # align maps
             self.map2.center = self.map1.center
             self.map2.zoom = self.map1.zoom
 
@@ -49,7 +56,9 @@ class Twomaps:
             )
 
     def save(self, filename):
-        """ save map as html """
+        """ save as html
+        :param filename: output filename. default extension is html.
+        """
         if not os.path.splitext(filename)[-1]:
             filename = filename + ".html"
         if not filename.find(os.sep) >= 0:

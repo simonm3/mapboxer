@@ -16,7 +16,7 @@ def ge(year):
     const.geometry = const.geometry.simplify(0.001)
     res_ge = get.ge(year)
 
-    # (ONS : electoral calculus) constituencies
+    # convert to ONS constituency names (ONS : electoral calculus)
     matches = [
         ("South East Cambridgeshire", "Cambridgeshire South East"),
         ("North West Norfolk", "Norfolk North West"),

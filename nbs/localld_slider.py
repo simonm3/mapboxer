@@ -14,27 +14,23 @@
 # ---
 
 from ipstartup import *
-import geopandas as gpd
-import plotly.express as px
-from mapboxer.elections import get, clean, show
-from mapboxer.utils import iframe
 from mapboxer import Twomaps
+from mapboxer.elections import clean, get, show
 
 const, constcentres = clean.general()
 
-year1=2011
+year1 = 2011
 wards, wardcentres = clean.local(year1)
 m1 = show.get_map(wards, wardcentres, const, constcentres)
 
-year2=2015
+year2 = 2015
 wards, wardcentres = clean.local(year2)
 m2 = show.get_map(wards, wardcentres, const, constcentres)
 
 m1.title = f"Libdem%winner for local elections {year2} (left of slider is {year1})"
 s = Twomaps(m1, m2, "slider")
-iframe(s.html())
+s
 
 s.save("localld_slider2015")
 
-from yatl import A
 A("hhh").xml()

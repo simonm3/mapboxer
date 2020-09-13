@@ -1,3 +1,5 @@
+// adapted to function from https://github.com/mapbox/mapbox-gl-sync-move/blob/master/index.js
+
 function moveToMapPosition(master, clones) {
     var center = master.getCenter();
     var zoom = master.getZoom();
