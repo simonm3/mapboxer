@@ -1,6 +1,6 @@
 This is a thin python wrapper for mapbox. It generates javscript to execute mapboxgl and create mapbox maps.
 
-Why mapbox? There are many alternatives that work with smaller datasets but mapbox is the only one of those I tried that can cope with larger datasets.
+Why mapbox? There are many alternatives that work with smaller datasets but of the ones I tried mapbox was easily most responsive with larger datasets.
 
 Create a map using minimal defaults
 -----------------------------------
