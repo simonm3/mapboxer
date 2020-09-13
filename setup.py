@@ -9,12 +9,12 @@ from setuptools import setup
 params = dict(
     name='pymapbox',
     description='This is a thin python wrapper for mapbox. It generates javscript to execute mapboxgl and create mapbox maps.',
-    version='0.0.0',
-    url='https://github.com/simonm3/mapboxer.git',
-    install_requires=['ipyleaflet', 'numpy', 'plotly', 'geopandas', 'colour', 'pyyaml',
-                      'shapely', 'ipython', 'geopy', 'pandas', 'yatl', 'tqdm', 'fuzzywuzzy', 'folium', 'scipy'],
+    version='0.0.1',
+    url='https://github.com/simonm3/pymapbox.git',
+    install_requires=['yatl', 'shapely', 'geopandas', 'pyyaml', 'tqdm', 'folium', 'fuzzywuzzy',
+                      'plotly', 'geopy', 'ipyleaflet', 'numpy', 'pandas', 'scipy', 'colour', 'ipython'],
     packages=['pymapbox', 'pymapbox.elections'],
-    package_data={},
+    package_data={'pymapbox/elections': ['elections.html', 'elections.rst']},
     include_package_data=True,
     py_modules=[],
     scripts=None)
